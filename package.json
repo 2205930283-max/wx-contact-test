@@ -1,5 +1,5 @@
 {
-  "name":"contact-test",
+  "name":"contact-all",
   "dependencies":{"express":"^4.21.0"},
   "scripts":{"start":"node run.js"}
 }
