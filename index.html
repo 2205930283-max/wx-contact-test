@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微信自用测试平台</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:linear-gradient(135deg,#0f172a,#1e293b);color:#f1f5f9;padding:40px 20px}
+        .container{max-width:800px;margin:0 auto;text-align:center}
+        .title{font-size:28px;margin-bottom:40px;background:linear-gradient(90deg,#38bdf8,#6366f1);-webkit-background-clip:text;color:transparent}
+        .load-btn{padding:15px 40px;background:linear-gradient(45deg,#2563eb,#0ea5e9);border:none;color:#fff;border-radius:50px;font-size:17px;cursor:pointer}
+        .info-card{margin-top:30px;padding:20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;text-align:left;white-space:pre-line}
+        .auth-area,.upload-area{margin-top:40px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
+        .auth-btn,.upload-label{padding:12px 25px;border-radius:8px;cursor:pointer}
+        .auth-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#f1f5f9}
+        .upload-label{border:1px solid #38bdf8;color:#38bdf8}
+        input[type="file"]{display:none}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">by鱼笙 自用数据测试平台</h1>
+        <button class="load-btn" id="loadConfig">载入基础设置</button>
+        <div class="info-card" id="configBox" style="display: none;"></div>
+        <div class="auth-area">
+            <button class="auth-btn" id="contactAuth">通讯录权限提示</button>
+            <button class="auth-btn" id="photoAuth">相册权限提示</button>
+        </div>
+        <div class="upload-area">
+            <label class="upload-label">
+                上传通讯录文件
+                <input type="file" id="contactFile">
+            </label>
+            <label class="upload-label">
+                上传相册图片
+                <input type="file" id="photoFile">
+            </label>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("loadConfig").addEventListener("click", async () => {
+            const res = await fetch("/api/set")
+            const data = await res.json()
+            const box = document.getElementById("configBox")
+            box.style.display = "block"
+            box.innerText = `系统名称：${data.name}\n状态：${data.status}\n提示：${data.auth}`
+        })
+
+        document.getElementById("contactAuth").addEventListener("click", () => {
+            alert("⚠️ 仅自用测试，需您手动授权上传通讯录文件，平台不主动读取")
+        })
+
+        document.getElementById("photoAuth").addEventListener("click", () => {
+            alert("⚠️ 仅自用测试，需您手动授权上传相册图片，平台不主动读取")
+        })
+
+        document.getElementById("contactFile").addEventListener("change", async (e) => {
+            const file = e.target.files[0]
+            if (!file) return
+            const formData = new FormData()
+            formData.append("file", file)
+            const res = await fetch("/api/contact", {
+                method: "POST",
+                body: formData
+            })
+            const data = await res.json()
+            alert(data.msg)
+        })
+
+        document.getElementById("photoFile").addEventListener("change", async (e) => {
+            const file = e.target.files[0]
+            if (!file) return
+            const formData = new FormData()
+            formData.append("img", file)
+            const res = await fetch("/api/photo", {
+                method: "POST",
+                body: formData
+            })
+            const data = await res.json()
+            alert(data.msg)
+        })
+    </script>
+</body>
+</html>
