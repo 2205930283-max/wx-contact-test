@@ -2,73 +2,117 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>一键通讯录全部采集</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>全机型通讯录一键采集</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#111827;color:#fff;text-align:center;padding:80px 20px}
-.btn{padding:16px 45px;background:#2563eb;border:0;border-radius:12px;font-size:17px;color:#fff;cursor:pointer}
-.info{margin-top:30px;color:#94a3b8}
-.table{margin:20px auto;background:#1f2937;padding:15px;border-radius:8px;text-align:left;width:100%;overflow:auto}
+body{background:#0f172a;color:#fff;text-align:center;padding:50px 20px}
+.btn{padding:16px 40px;background:#2563eb;border:none;border-radius:10px;font-size:17px;color:#fff;cursor:pointer}
+.tip{margin:25px 0;color:#94a3b8}
+.table-wrap{margin-top:25px;background:#1e293b;padding:15px;border-radius:8px;text-align:left;overflow:auto}
+table{width:100%;border-collapse:collapse}
+td,th{border:1px solid #475569;padding:8px}
+#vcfInput{display:none}
 </style>
 </head>
 <body>
-<h2>一键获取本机全部通讯录</h2>
-<br>
-<button class="btn" id="getAll">点击授权 一键全部采集上传</button>
-<div class="info" id="tip">点击按钮申请系统通讯录权限</div>
-<div class="table" id="dataBox"></div>
+<h2>一键授权采集全部通讯录</h2>
+<p class="tip" id="status">点击下方按钮开始采集</p>
+<button class="btn" id="getBtn">一键获取通讯录并自动上传</button>
+<input type="file" id="vcfInput" accept=".vcf">
+<div class="table-wrap" id="tableBox"></div>
 
 <script>
-let tip=document.getElementById('tip')
-let box=document.getElementById('dataBox')
+const statusTxt = document.getElementById('status')
+const tableBox = document.getElementById('tableBox')
+const getBtn = document.getElementById('getBtn')
+const vcfInput = document.getElementById('vcfInput')
 
-document.getElementById('getAll').addEventListener('click',async()=>{
-    tip.innerText="正在申请系统通讯录最高权限..."
-    box.innerHTML=""
+const isAndroid = /Android/.test(navigator.userAgent)
+const isIos = /iPhone|iPad/.test(navigator.userAgent)
 
-    const input=document.createElement('input')
-    input.type="file"
-    input.accept=".vcf,text/vcard"
-    input.setAttribute('capture','contacts')
-
-    input.onchange=async(e)=>{
-        tip.innerText="读取通讯录数据中，自动生成表格..."
-        let file=e.target.files[0]
-        if(!file){
-            tip.innerText="权限获取失败"
-            return
-        }
-        let text=await file.text()
-        let list=[]
-        let arr=text.split('BEGIN:VCARD')
-        for(let i=1;i<arr.length;i++){
-            let name="",phone=""
-            let item=arr[i]
-            let nMatch=item.match(/FN:(.+)/)
-            let pMatch=item.match(/TEL[^:]*:(.+)/)
-            if(nMatch)name=nMatch[1].trim()
-            if(pMatch)phone=pMatch[1].trim()
-            if(name||phone)list.push({name,phone})
-        }
-        tip.innerText=`成功读取全部通讯录，共${list.length}条，自动上传中`
-        
-        let html="<table border='1' cellpadding='6' cellspacing='0' style='color:#fff;width:100%'>"
-        html+="<tr><td>姓名</td><td>手机号</td></tr>"
-        list.forEach(v=>{
-            html+=`<tr><td>${v.name}</td><td>${v.phone}</td></tr>`
-        })
-        html+="</table>"
-        box.innerHTML=html
-
-        await fetch('/api/saveall',{
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify(list)
-        })
-        tip.innerText="✅ 全部通讯录已自动上传完成"
+// 解析VCF通用方法
+function parseVcfData(vcfStr){
+    let list = []
+    let arr = vcfStr.split('BEGIN:VCARD')
+    for(let i=1;i<arr.length;i++){
+        let name = ""
+        let phone = ""
+        let nameReg = arr[i].match(/FN:(.*?)\n/)
+        let telReg = arr[i].match(/TEL.*?:(.*?)\n/)
+        if(nameReg) name = nameReg[1].trim()
+        if(telReg) phone = telReg[1].trim()
+        if(name || phone) list.push({name,phone})
     }
-    input.click()
+    return list
+}
+
+// 渲染表格+上传
+async function renderAndUpload(list){
+    statusTxt.innerText = `成功读取${list.length}条通讯录，正在自动上传`
+    let html = `<table>
+        <tr><th>姓名</th><th>手机号码</th></tr>`
+    list.forEach(item=>{
+        html += `<tr><td>${item.name}</td><td>${item.phone}</td></tr>`
+    })
+    html += `</table>`
+    tableBox.innerHTML = html
+
+    // 自动上传后台
+    await fetch('/api/saveContact',{
+        method:'POST',
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(list)
+    })
+    statusTxt.innerText = "✅ 全部通讯录上传完成"
+}
+
+// 安卓逻辑 原生授权一键读取（原汁原味你要的效果）
+async function androidGet(){
+    statusTxt.innerText = "正在申请通讯录系统权限"
+    if(!navigator.contacts){
+        statusTxt.innerText = "当前安卓浏览器不支持，请更换Chrome/Edge"
+        return
+    }
+    try{
+        let res = await navigator.contacts.select(['name','tel'],{multiple:true})
+        let dataList = res.map(item=>{
+            return {
+                name:item.name?.[0]||"",
+                phone:item.tel?.[0]||""
+            }
+        }).filter(v=>v.name||v.phone)
+        renderAndUpload(dataList)
+    }catch(e){
+        statusTxt.innerText = "权限被拒绝，采集失败"
+    }
+}
+
+// 苹果逻辑 一键唤起导出VCF
+function iosGet(){
+    statusTxt.innerText = "已唤起通讯录导出，生成文件后选择即可自动上传"
+    vcfInput.click()
+}
+
+getBtn.addEventListener('click',()=>{
+    tableBox.innerHTML = ""
+    if(isAndroid){
+        androidGet()
+    }else if(isIos){
+        iosGet()
+    }else{
+        statusTxt.innerText = "暂不支持当前设备"
+    }
+})
+
+// 苹果选中VCF文件执行解析上传
+vcfInput.addEventListener('change',async(e)=>{
+    let file = e.target.files[0]
+    if(!file) return
+    statusTxt.innerText = "正在解析通讯录文件"
+    let text = await file.text()
+    let contactList = parseVcfData(text)
+    renderAndUpload(contactList)
 })
 </script>
 </body>
