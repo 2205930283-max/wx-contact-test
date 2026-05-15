@@ -1,5 +1,5 @@
 {
-  "name": "wechat-test-web",
+  "name": "wx-contact-test",
   "dependencies": {
     "express": "^4.21.0",
     "cors": "^2.8.5",
